@@ -6,6 +6,12 @@
 #### PHP Version
     8.2.1
 
+#### NODE Version
+    16.19.1
+
+### NPM Version
+    9.6.3
+
 #### PHP Extensions
     php8.2-fpm
     php8.2-mbstring

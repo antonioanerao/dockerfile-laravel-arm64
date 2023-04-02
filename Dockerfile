@@ -56,6 +56,7 @@ RUN ln -fs /usr/share/zoneinfo/America/Rio_Branco /etc/localtime && \
     curl -s https://deb.nodesource.com/setup_16.x | bash && \
     apt-get update && \
     apt install nodejs -y && \
+    npm install -g npm && \
     phpenmod 8.2  && \
     rm -rf /var/lib/apt/lists/* && \
     apt upgrade -y && \
