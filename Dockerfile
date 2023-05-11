@@ -1,14 +1,15 @@
-FROM nginx
+FROM arm64v8/nginx
 
 VOLUME [ "/laravel" ]
 WORKDIR /laravel
 ENV ACCEPT_EULA=Y
 
-COPY --chown=www-data:www-data laravel /laravel
-
+# Define o timezone padrão
 RUN ln -fs /usr/share/zoneinfo/America/Rio_Branco /etc/localtime && \
-    dpkg-reconfigure --frontend noninteractive tzdata && \
-    apt update && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
+# Instala as dependências do sistema
+RUN apt update && \
     apt -y upgrade && \
     echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen && \
     apt install -y ca-certificates \
@@ -26,10 +27,14 @@ RUN ln -fs /usr/share/zoneinfo/America/Rio_Branco /etc/localtime && \
                    gcc \
                    g++ \
                    make \
-                   unzip && \
-    locale-gen && \
-    curl -o /etc/apt/trusted.gpg.d/php.gpg -fSL "https://packages.sury.org/php/apt.gpg" && \
-    echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list && \
+                   unzip
+
+# Define a localização padrão
+RUN locale-gen && \
+    curl -o /etc/apt/trusted.gpg.d/php.gpg -fSL "https://packages.sury.org/php/apt.gpg"
+
+# Instla o PHP 8.2, suas extensões, node, npm e composer
+RUN echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list && \
     apt -y update && \
     apt -y install --allow-unauthenticated php8.2 \
                    php8.2-fpm \
@@ -58,7 +63,9 @@ RUN ln -fs /usr/share/zoneinfo/America/Rio_Branco /etc/localtime && \
     curl -s https://deb.nodesource.com/setup_16.x | bash && \
     apt-get update && \
     apt install nodejs -y && \
-    phpenmod 8.2  && \
+    npm install -g npm@9.6.6
+
+RUN phpenmod 8.2  && \
     rm -rf /var/lib/apt/lists/* && \
     apt upgrade -y && \
     apt autoremove -y && \
@@ -66,11 +73,9 @@ RUN ln -fs /usr/share/zoneinfo/America/Rio_Branco /etc/localtime && \
     printf "# priority=30\nservice php8.2-fpm start\n" > /docker-entrypoint.d/30-php8.2-fpm.sh && \
     chmod 755 /docker-entrypoint.d/30-php8.2-fpm.sh && \
     chmod 755 /docker-entrypoint.d/30-php8.2-fpm.sh && \
+    composer create-project laravel/laravel . && \
     chgrp -R www-data /laravel/storage /laravel/bootstrap/cache /laravel/storage/logs &&  \
-    chmod -R ug+rwx /laravel/storage /laravel/bootstrap/cache /laravel/storage/logs &&  \
-    composer update && \
-    cp .env.example .env && \
-    php artisan key:generate
+    chmod -R ug+rwx /laravel/storage /laravel/bootstrap/cache /laravel/storage/logs
 
 COPY config_cntr/php.ini /etc/php/8.2/fpm/php.ini
 COPY config_cntr/www.conf /etc/php/8.2/fpm/pool.d/www.conf
